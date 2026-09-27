@@ -1,10 +1,11 @@
 import os
 import sys
+import argparse
 from openai import OpenAI
 from openai.types.chat import ChatCompletion
 from dotenv import load_dotenv
 
-TESTING_MODE = "-t" in sys.argv
+TESTING_MODE = False
 FAKE_RESPONSE = ChatCompletion.model_validate({
     "id": "gen-fake-123",
     "object": "chat.completion",
@@ -32,7 +33,15 @@ def main():
     
     load_dotenv()
     
+    parser = argparse.ArgumentParser(description="Chatbot")
+    parser.add_argument("user_prompt", type=str, help="User prompt")
+    parser.add_argument("--verbose", action="store_true", help="Enable verbose output")
+    parser.add_argument("-t", "--test", action="store_true", help="Suppress actual LLM calls")
+    args = parser.parse_args()
+    
     # Testing mode check
+    global TESTING_MODE
+    TESTING_MODE = args.test
     if TESTING_MODE:
         print("Running in TESTING_MODE. No requests to OpenRouter AI will be made")
     
@@ -44,26 +53,31 @@ def main():
         api_key=api_key,
     )
     
-    response = call_llm(client)
+    
+    messages = [
+        {"role": "user",
+         "content": args.user_prompt
+         }
+    ]
+    
+    response = call_llm(client, messages)
+        
     
     if response.usage:
-        print(f"Prompt tokens: {response.usage.prompt_tokens}")
+        if args.verbose:
+            print(f"User prompt: {args.user_prompt}")
+            print(f"Prompt tokens: {response.usage.prompt_tokens}")
         print(f"Response tokens: {response.usage.completion_tokens}")
     else:
         raise RuntimeError("no usage data from LLM response")
     print(response.choices[0].message.content)
 
-def call_llm(client):
+def call_llm(client, messages):
     if TESTING_MODE:
         return FAKE_RESPONSE
     return client.chat.completions.create(
             model="openrouter/free",
-            messages=[
-                {
-                    "role": "user",
-                    "content": "Why is Boot.dev such a great place to learn backend development? Use one paragraph maximum.",
-                }
-            ],
+            messages=messages,
         )
 
 
