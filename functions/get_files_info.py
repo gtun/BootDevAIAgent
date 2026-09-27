@@ -9,13 +9,13 @@ def get_files_info(working_directory: str, directory: str = ".") -> str:
         print("Result for current directory:")
 
         if not os.path.isdir(target_dir):
-            raise Exception(f'    Error: {directory} is not a directory')
+            raise Exception(f'{directory} is not a directory')
         if not valid_target_dir:
-            raise Exception(f'    Error: Cannot list "{directory}" as it is outside the permitted working directory')
+            raise Exception(f'Cannot list "{directory}" as it is outside the permitted working directory')
         
         file_list = [f for f in os.listdir(target_dir) if not f.startswith("__") and not f.endswith("__") and not f.startswith(".")]
         for file in file_list:
             print(f"  - {file}: file_size={os.path.getsize(os.path.join(target_dir, file))} bytes, is_dir={os.path.isdir(os.path.join(target_dir, file))}")
         return f'Success: "{directory}" is within the working directory'
     except Exception as e:
-        return f'{e}'
+        return f'Error: {e}'

@@ -8,9 +8,9 @@ def get_file_content(working_directory: str, file_path: str) -> str:
     
     try:
         if not file_in_working_directory:
-            raise Exception(f'Error: Cannot read "{file_path}" as it is outside the permitted working directory')
+            raise Exception(f'Cannot read "{file_path}" as it is outside the permitted working directory')
         if not os.path.isfile(target_file):
-            raise Exception(f'Error: File not found or is not a regular file: "{file_path}"')
+            raise Exception(f'File not found or is not a regular file: "{file_path}"')
         
         with open(target_file, "r") as f:
             file_contents = f.read(config.FILE_CONTENT_LIMIT)
@@ -20,4 +20,4 @@ def get_file_content(working_directory: str, file_path: str) -> str:
         
         return(file_contents)
     except Exception as e:
-        return f'{e}'
+        return f'Error: {e}'
