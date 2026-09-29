@@ -1,6 +1,9 @@
 import os
 import sys
 import argparse
+import prompts
+import call_functions
+import json
 from openai import OpenAI
 from openai.types.chat import ChatCompletion
 from dotenv import load_dotenv
@@ -55,10 +58,15 @@ def main():
     
     
     messages = [
-        {"role": "user",
-         "content": args.user_prompt
-         }
-    ]
+        {
+            "role": "system",
+            "content": prompts.system_prompt
+        },
+        {
+            "role": "user",
+            "content": args.user_prompt
+        }
+    ] 
     
     response = call_llm(client, messages)
         
@@ -70,7 +78,13 @@ def main():
         print(f"Response tokens: {response.usage.completion_tokens}")
     else:
         raise RuntimeError("no usage data from LLM response")
-    print(response.choices[0].message.content)
+    
+    
+    #print(response.choices[0].message.content)
+    if response.choices[0].message.tool_calls:
+        for tool_call in response.choices[0].message.tool_calls:
+            function_args = json.loads(tool_call.function.arguments or "{}")
+            print(f"Calling function: {tool_call.function.name}({function_args})")
 
 def call_llm(client, messages):
     if TESTING_MODE:
@@ -78,6 +92,8 @@ def call_llm(client, messages):
     return client.chat.completions.create(
             model="openrouter/free",
             messages=messages,
+            tools=call_functions.available_functions,
+            temperature=0,
         )
 
 

@@ -28,7 +28,7 @@ def run_python_file(
         )
         
         output_string:str = ""
-        if processed.returncode == 0:
+        if processed.returncode != 0:
             output_string += f"Process exited with code {processed.returncode}"
         
         if not processed.stdout and not processed.stderr:
@@ -43,3 +43,26 @@ def run_python_file(
         
     except Exception as e:
         return f'Error: executing Python file: {e}'
+
+schema_run_python_file = {
+    "type": "function",
+    "function": {
+        "name": "run_python_file",
+        "description": "Executes a Python file relative to the working directory with optional command-line arguments, returning its stdout, stderr, and exit code. Times out after 30 seconds",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "file_path": {
+                    "type": "string",
+                    "description": "Path to the file to perform command on",
+                },
+                "args": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Optional list of command-line arguments to pass to the Python script"
+                },
+            },
+            "required": ["file_path"],
+        },
+    },
+}
