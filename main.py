@@ -3,6 +3,7 @@ import sys
 import argparse
 import prompts
 import call_function
+import config
 from openai import OpenAI
 from openai.types.chat import ChatCompletion
 from dotenv import load_dotenv
@@ -31,8 +32,6 @@ FAKE_RESPONSE = ChatCompletion.model_validate({
 })
 
 def main():
-    print("Hello from bootdevaiagent!")
-    
     load_dotenv()
     
     parser = argparse.ArgumentParser(description="Chatbot")
@@ -67,30 +66,40 @@ def main():
         }
     ] 
     
-    response = call_llm(client, messages)
+    for _ in range(config.ITERATION_CAP):
+        response = call_llm(client, messages)
         
-    
-    if response.usage:
-        if args.verbose:
-            print(f"User prompt: {args.user_prompt}")
-            print(f"Prompt tokens: {response.usage.prompt_tokens}")
-        print(f"Response tokens: {response.usage.completion_tokens}")
-    else:
-        raise RuntimeError("no usage data from LLM response")
-    
-    
-    #print(response.choices[0].message.content)
-    if response.choices[0].message.tool_calls:
         
-        for tool_call in response.choices[0].message.tool_calls:
-            result_message = call_function.call_function(tool_call, args.verbose)
-            
-            if not result_message["content"]:
-                raise Exception("Returned tool message has no content!")
-            
+        if response.usage:
             if args.verbose:
-                print(f"-> {result_message['content']}")
-            
+                print(f"User prompt: {args.user_prompt}")
+                print(f"Prompt tokens: {response.usage.prompt_tokens}")
+            print(f"Response tokens: {response.usage.completion_tokens}")
+        else:
+            raise RuntimeError("no usage data from LLM response")
+        
+        message = response.choices[0].message
+        messages.append(message)
+        
+        if message.tool_calls:            
+            for tool_call in message.tool_calls:
+                result_message = call_function.call_function(tool_call, args.verbose)
+                
+                if not result_message["content"]:
+                    raise Exception("Returned tool message has no content!")
+                
+                if args.verbose:
+                    print(f"-> {result_message['content']}")
+                    
+                messages.append(result_message)
+        else:
+            print("Final response:")
+            print(message.content)
+            return
+        
+    print(f"Max iterations of {config.ITERATION_CAP} reached!")
+    print("Exiting...")
+    exit(1)
                       
             
             
