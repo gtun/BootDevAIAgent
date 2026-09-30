@@ -37,7 +37,7 @@ schema_write_file = {
                     "description": "Content to be written to the file"
                 },
             },
-            "required": ["file_path"],
+            "required": ["file_path", "content"],
         },
     },
 }

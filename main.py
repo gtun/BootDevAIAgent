@@ -2,8 +2,7 @@ import os
 import sys
 import argparse
 import prompts
-import call_functions
-import json
+import call_function
 from openai import OpenAI
 from openai.types.chat import ChatCompletion
 from dotenv import load_dotenv
@@ -82,9 +81,19 @@ def main():
     
     #print(response.choices[0].message.content)
     if response.choices[0].message.tool_calls:
+        
         for tool_call in response.choices[0].message.tool_calls:
-            function_args = json.loads(tool_call.function.arguments or "{}")
-            print(f"Calling function: {tool_call.function.name}({function_args})")
+            result_message = call_function.call_function(tool_call, args.verbose)
+            
+            if not result_message["content"]:
+                raise Exception("Returned tool message has no content!")
+            
+            if args.verbose:
+                print(f"-> {result_message['content']}")
+            
+                      
+            
+            
 
 def call_llm(client, messages):
     if TESTING_MODE:
@@ -92,10 +101,9 @@ def call_llm(client, messages):
     return client.chat.completions.create(
             model="openrouter/free",
             messages=messages,
-            tools=call_functions.available_functions,
+            tools=call_function.available_functions,
             temperature=0,
         )
-
 
 if __name__ == "__main__":
     main()
